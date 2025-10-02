@@ -47,7 +47,56 @@
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Verify compliance with the Workflow Runner Constitution (v1.0.0):
+
+**Code Quality & Tooling**
+- [ ] .mise.toml exists with pinned versions (Node, Python, uv, pnpm, pyright, ruff, Biome)
+- [ ] No tool versions specified outside mise
+
+**Type Safety**
+- [ ] Frontend uses strict TypeScript + svelte-check
+- [ ] Backend uses pyright
+- [ ] No unjustified `any` or `# type: ignore`
+
+**Linting & Formatting**
+- [ ] `mise run lint` command configured
+- [ ] ruff for Python (lint + format)
+- [ ] Biome for TS/JS/JSON
+
+**Testing & Contracts**
+- [ ] Unit tests planned for CSV validation
+- [ ] Contract tests enforced against OpenAPI
+- [ ] Playwright smoke test for Upload → Report path
+- [ ] CI runs on every PR
+
+**UX Consistency**
+- [ ] Flow follows Upload → Validate → Run → Report
+- [ ] Error messages include row + column
+- [ ] Forms are accessible (labels, focus, keyboard)
+
+**Performance**
+- [ ] First paint target < 2s on broadband
+- [ ] Validation target ≤ 2s for 200 rows
+- [ ] Status polling at 10s with exponential backoff
+
+**Styling System**
+- [ ] No utility CSS frameworks (no Tailwind/UnoCSS)
+- [ ] Vanilla Extract for tokens/themes
+- [ ] Svelte scoped styles for components
+- [ ] Lightning CSS in build
+
+**Reproducibility & Security**
+- [ ] Workflow version pinned
+- [ ] Container images use sha256 digests (no :latest)
+- [ ] Run manifest is immutable
+- [ ] "Re-run exact" feature planned
+- [ ] No secrets in repo
+
+**Scope Control**
+- [ ] v0 limited to one workflow + one preset
+- [ ] Feature has specification document
+
+*Any violations must be documented in Complexity Tracking section*
 
 ## Project Structure
 
@@ -216,4 +265,4 @@ directories captured above]
 - [ ] Complexity deviations documented
 
 ---
-*Based on Constitution v2.1.1 - See `/memory/constitution.md`*
+*Based on Constitution v1.0.0 - See `.specify/memory/constitution.md`*

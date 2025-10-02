@@ -61,6 +61,8 @@ When creating this spec from a user prompt:
 1. **Given** [initial state], **When** [action], **Then** [expected outcome]
 2. **Given** [initial state], **When** [action], **Then** [expected outcome]
 
+*Note: Constitution requires Playwright smoke test for Upload → Validate → Run → Report path*
+
 ### Edge Cases
 - What happens when [boundary condition]?
 - How does system handle [error scenario]?
