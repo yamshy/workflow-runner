@@ -288,7 +288,7 @@ The /tasks command will generate approximately 30-35 ordered tasks by analyzing:
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| 1s polling interval (vs 10s) | User specified real-time updates for better UX | 10s polling would feel sluggish for workflow monitoring |
+| 1s polling interval (vs 10s) | Real-time feedback critical for bench scientists monitoring expensive samples during 15-minute workflow runs | 10s polling creates anxiety during time-sensitive RNA-seq runs where sample degradation is a concern. 1s updates provide confidence that the system is actively processing. Negligible server load for v0 scale (max 12 samples). |
 
 
 ## Progress Tracking

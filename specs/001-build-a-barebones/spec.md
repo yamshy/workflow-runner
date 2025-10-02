@@ -88,6 +88,18 @@ A bench scientist needs to run RNA-seq analysis on their samples. They log into 
 
 ## Requirements *(mandatory)*
 
+### Non-Functional Requirements
+- **NFR-001**: System MUST complete CSV validation within 2 seconds for files up to 200 rows
+- **NFR-002**: System MUST achieve first paint in under 2 seconds on broadband connections (>25 Mbps)
+- **NFR-003**: System MUST handle up to 10 concurrent users without performance degradation
+- **NFR-004**: System MUST maintain 99% uptime during business hours (8 AM - 6 PM)
+- **NFR-005**: System MUST use HTTPS for all communications in production
+- **NFR-006**: System MUST log all errors with sufficient context for debugging without exposing sensitive data
+- **NFR-007**: System MUST support modern browsers (Chrome/Edge 90+, Firefox 88+, Safari 14+)
+- **NFR-008**: System MUST be deployable via Docker Compose with single command
+- **NFR-009**: System MUST not store passwords or secrets in plain text
+- **NFR-010**: System MUST gracefully handle workflow failures with clear error messages
+
 ### Functional Requirements
 - **FR-001**: System MUST provide a login page at /login using a single shared passphrase for authentication
 - **FR-002**: System MUST distinguish between Admin and Runner user types (Admins can delete/cancel runs; both can create/view)
@@ -109,15 +121,15 @@ A bench scientist needs to run RNA-seq analysis on their samples. They log into 
 - **FR-016**: System MUST provide "Re-run exact" button for completed runs
 - **FR-017**: System MUST create new run with identical parameters when "Re-run exact" is clicked
 - **FR-018**: System MUST provide /runs page listing all runs for the user
-- **FR-019**: System MUST complete successful runs and generate report within 15 minutes for new users
+- **FR-019**: System MUST complete successful runs and generate report within 15 minutes for typical 12-sample runs
 - **FR-020**: System MUST use non-technical language in all user-facing messages
 - **FR-023**: System MUST automatically delete runs and associated reports after 30 days from completion
 
 ### Key Entities *(include if feature involves data)*
-- **User**: Represents system users with two types (Admin can delete/cancel runs, Runner can only create/view), authenticated via shared passphrase
+- **Session**: Represents authenticated sessions with role selection (Admin or Runner) at login time, stored in secure cookies with 24hr expiry. No persistent user records are stored - roles are session-only
 - **Run**: Represents a workflow execution instance with unique run_id, status, associated CSV data, timestamps, auto-deleted after 30 days
 - **Sample Sheet**: CSV file containing sample metadata with required headers and validation rules
-- **Workflow**: Single pinned RNA-seq analysis pipeline with fixed version and container specifications
+- **Workflow**: Single pinned RNA-seq analysis pipeline executed via Nextflow DSL2 (nf-core/rnaseq v3.12.0) with fixed version and container specifications using sha256 digests
 - **Report**: HTML output file generated after successful workflow completion, linked to specific run
 - **Provenance**: Metadata tracking workflow version, container digests, and execution parameters
 
