@@ -1,0 +1,545 @@
+openapi: 3.0.3
+info:
+  title: RNA-seq Workflow Runner API
+  version: 0.1.0
+  description: API for validating sample sheets and executing RNA-seq workflows
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+
+paths:
+  /api/auth/login:
+    post:
+      summary: Authenticate user with passphrase
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - passphrase
+                - role
+              properties:
+                passphrase:
+                  type: string
+                  description: Shared passphrase for v0
+                role:
+                  type: string
+                  enum: [Admin, Runner]
+                  description: User role selection
+            examples:
+              admin:
+                value:
+                  passphrase: "test123"
+                  role: "Admin"
+              runner:
+                value:
+                  passphrase: "test123"
+                  role: "Runner"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                success:
+                  value:
+                    session_id: "550e8400-e29b-41d4-a716-446655440000"
+                    user_id: "admin-001"
+                    role: "Admin"
+        '401':
+          description: Invalid passphrase
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid:
+                  value:
+                    error: "Invalid passphrase"
+
+  /api/validate:
+    post:
+      summary: Validate CSV sample sheet
+      tags:
+        - Validation
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV file to validate
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+              examples:
+                valid:
+                  value:
+                    valid: true
+                    errors: []
+                    row_count: 3
+                invalid_headers:
+                  value:
+                    valid: false
+                    errors:
+                      - row: 0
+                        column: null
+                        message: "Missing required header: sample_id"
+                    row_count: 0
+                duplicate_ids:
+                  value:
+                    valid: false
+                    errors:
+                      - row: 2
+                        column: "sample_id"
+                        message: "Duplicate sample_id: S001"
+                      - row: 3
+                        column: "sample_id"
+                        message: "Duplicate sample_id: S001"
+                    row_count: 4
+                invalid_files:
+                  value:
+                    valid: false
+                    errors:
+                      - row: 1
+                        column: "read1_uri"
+                        message: "File not found: /data/missing.fastq.gz"
+                      - row: 2
+                        column: "read2_uri"
+                        message: "No read permission: /data/protected.fastq.gz"
+                    row_count: 3
+
+  /api/runs:
+    post:
+      summary: Create new workflow run
+      tags:
+        - Runs
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Validated CSV file
+      responses:
+        '201':
+          description: Run created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunCreatedResponse'
+              examples:
+                created:
+                  value:
+                    run_id: "run-550e8400-e29b-41d4"
+                    status: "queued"
+                    created_at: "2025-01-15T10:30:00Z"
+        '400':
+          description: Invalid CSV file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List all runs
+      tags:
+        - Runs
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [queued, running, completed, failed]
+          description: Filter by status
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of runs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunListResponse'
+              examples:
+                list:
+                  value:
+                    runs:
+                      - run_id: "run-001"
+                        status: "completed"
+                        created_at: "2025-01-15T09:00:00Z"
+                        user_id: "admin-001"
+                        sample_count: 12
+                      - run_id: "run-002"
+                        status: "running"
+                        created_at: "2025-01-15T10:00:00Z"
+                        user_id: "runner-001"
+                        sample_count: 8
+                    total: 2
+
+  /api/runs/{run_id}:
+    get:
+      summary: Get run details
+      tags:
+        - Runs
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema:
+            type: string
+          description: Run identifier
+      responses:
+        '200':
+          description: Run details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunDetailResponse'
+              examples:
+                queued:
+                  value:
+                    run_id: "run-001"
+                    status: "queued"
+                    created_at: "2025-01-15T10:30:00Z"
+                    user_id: "admin-001"
+                    sample_count: 3
+                    provenance:
+                      workflow_version: "1.0.0"
+                      container_digests:
+                        rnaseq: "sha256:abc123..."
+                        multiqc: "sha256:def456..."
+                running:
+                  value:
+                    run_id: "run-001"
+                    status: "running"
+                    created_at: "2025-01-15T10:30:00Z"
+                    started_at: "2025-01-15T10:31:00Z"
+                    user_id: "admin-001"
+                    sample_count: 3
+                    progress_message: "Processing sample 2 of 3..."
+                    provenance:
+                      workflow_version: "1.0.0"
+                      container_digests:
+                        rnaseq: "sha256:abc123..."
+                        multiqc: "sha256:def456..."
+                completed:
+                  value:
+                    run_id: "run-001"
+                    status: "completed"
+                    created_at: "2025-01-15T10:30:00Z"
+                    started_at: "2025-01-15T10:31:00Z"
+                    completed_at: "2025-01-15T10:45:00Z"
+                    user_id: "admin-001"
+                    sample_count: 3
+                    report_url: "/static/reports/run-001/report.html"
+                    provenance:
+                      workflow_version: "1.0.0"
+                      container_digests:
+                        rnaseq: "sha256:abc123..."
+                        multiqc: "sha256:def456..."
+                      parameters:
+                        reference: "GRCh38"
+                        aligner: "STAR"
+                failed:
+                  value:
+                    run_id: "run-002"
+                    status: "failed"
+                    created_at: "2025-01-15T11:00:00Z"
+                    started_at: "2025-01-15T11:01:00Z"
+                    completed_at: "2025-01-15T11:05:00Z"
+                    error_message: "Workflow failed: Insufficient memory for sample S003"
+                    user_id: "runner-001"
+                    sample_count: 12
+        '404':
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a run (Admin only)
+      tags:
+        - Runs
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Run deleted successfully
+        '403':
+          description: Forbidden - Admin role required
+        '404':
+          description: Run not found
+
+  /api/runs/{run_id}/cancel:
+    post:
+      summary: Cancel a running job (Admin only)
+      tags:
+        - Runs
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Run cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+              examples:
+                success:
+                  value:
+                    message: "Run cancelled successfully"
+        '403':
+          description: Forbidden - Admin role required
+        '404':
+          description: Run not found
+        '409':
+          description: Run cannot be cancelled (not in running state)
+
+  /api/runs/{run_id}/rerun:
+    post:
+      summary: Re-run with exact same parameters
+      tags:
+        - Runs
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: New run created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunCreatedResponse'
+        '404':
+          description: Original run not found
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session_id
+
+  schemas:
+    AuthResponse:
+      type: object
+      required:
+        - session_id
+        - user_id
+        - role
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        role:
+          type: string
+          enum: [Admin, Runner]
+
+    ValidationResponse:
+      type: object
+      required:
+        - valid
+        - errors
+        - row_count
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+              - row
+              - message
+            properties:
+              row:
+                type: integer
+                minimum: 0
+              column:
+                type: string
+                nullable: true
+              message:
+                type: string
+        row_count:
+          type: integer
+          minimum: 0
+
+    RunCreatedResponse:
+      type: object
+      required:
+        - run_id
+        - status
+        - created_at
+      properties:
+        run_id:
+          type: string
+        status:
+          type: string
+          enum: [queued]
+        created_at:
+          type: string
+          format: date-time
+
+    RunListResponse:
+      type: object
+      required:
+        - runs
+        - total
+      properties:
+        runs:
+          type: array
+          items:
+            type: object
+            required:
+              - run_id
+              - status
+              - created_at
+              - user_id
+              - sample_count
+            properties:
+              run_id:
+                type: string
+              status:
+                type: string
+                enum: [queued, running, completed, failed]
+              created_at:
+                type: string
+                format: date-time
+              user_id:
+                type: string
+              sample_count:
+                type: integer
+        total:
+          type: integer
+
+    RunDetailResponse:
+      type: object
+      required:
+        - run_id
+        - status
+        - created_at
+        - user_id
+        - sample_count
+      properties:
+        run_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, running, completed, failed]
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        user_id:
+          type: string
+        sample_count:
+          type: integer
+        progress_message:
+          type: string
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        report_url:
+          type: string
+          nullable: true
+        provenance:
+          type: object
+          required:
+            - workflow_version
+            - container_digests
+          properties:
+            workflow_version:
+              type: string
+            container_digests:
+              type: object
+              additionalProperties:
+                type: string
+            parameters:
+              type: object
+              additionalProperties: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+security:
+  - sessionAuth: []
