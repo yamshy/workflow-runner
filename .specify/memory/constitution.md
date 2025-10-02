@@ -1,7 +1,7 @@
 <!--
 Sync Impact Report
 ------------------
-Version: 1.0.0 (initial constitution)
+Version: 1.0.0 → 1.1.0 (MINOR bump - new principle added)
 Ratified: 2025-10-02
 Last Amended: 2025-10-02
 
@@ -15,11 +15,12 @@ Principles:
   7. Styling System
   8. Reproducibility & Security
   9. Scope Control
+  10. Commit Standards (NEW - Conventional Commits enforcement)
 
 Template Sync Status:
-  ✅ plan-template.md - Updated Constitution Check reference
-  ✅ spec-template.md - Aligned with testing requirements
-  ✅ tasks-template.md - Aligned with TDD and testing requirements
+  ✅ plan-template.md - Updated Constitution Check section and version reference
+  ✅ spec-template.md - No changes required (commit standards are development workflow, not spec)
+  ✅ tasks-template.md - No changes required (commit standards are development workflow, not task structure)
 
 Follow-up TODOs: None
 -->
@@ -73,6 +74,11 @@ Version 0 (v0) supports exactly one workflow with one preset configuration. Any 
 
 **Rationale**: Feature creep is the enemy of shipping. Forcing specification documents creates an intentional decision point and prevents scope drift.
 
+### X. Commit Standards
+All commit messages MUST follow the Conventional Commits specification. Format: `type(scope): description` where type is one of: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`, or `revert`. Breaking changes MUST include `BREAKING CHANGE:` in the commit body or append `!` after the type/scope. The description MUST be lowercase and not end with a period.
+
+**Rationale**: Conventional Commits enable automated changelog generation, semantic versioning, and clear communication of intent. Standardized messages improve git history readability and enable tooling to parse changes programmatically.
+
 ## Enforcement
 
 ### Development Workflow
@@ -80,6 +86,7 @@ Version 0 (v0) supports exactly one workflow with one preset configuration. Any 
 2. All tests MUST pass locally before opening a pull request
 3. CI MUST validate linting, type checking, and tests on every PR
 4. No PR may be merged with failing CI checks
+5. Commit messages MUST follow Conventional Commits format
 
 ### Quality Gates
 Each pull request MUST verify:
@@ -89,6 +96,7 @@ Each pull request MUST verify:
 - [ ] No TypeScript `any` or Python `# type: ignore` without justification
 - [ ] Performance budgets met (first paint < 2s, validation < 2s)
 - [ ] OpenAPI contract tests updated for API changes
+- [ ] Commit messages follow Conventional Commits format
 
 ### Complexity Review
 Any deviation from these principles MUST be documented in the feature's `plan.md` under "Complexity Tracking" with:
@@ -108,7 +116,7 @@ This constitution supersedes all other development practices and conventions. Am
 
 All code reviews MUST verify constitutional compliance. Complexity MUST be justified; unjustified complexity MUST be simplified before merge.
 
-**Version**: 1.0.0 | **Ratified**: 2025-10-02 | **Last Amended**: 2025-10-02
+**Version**: 1.1.0 | **Ratified**: 2025-10-02 | **Last Amended**: 2025-10-02
 
 ---
 
@@ -163,3 +171,9 @@ Use this checklist during `/specify` and `/plan` to verify adherence:
 **Scope**
 - [ ] Only one workflow + one preset in v0
 - [ ] New features require new spec document
+
+**Commit Standards**
+- [ ] Commit messages follow Conventional Commits format (type(scope): description)
+- [ ] Valid types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert
+- [ ] Breaking changes marked with `!` or `BREAKING CHANGE:` in body
+- [ ] Descriptions are lowercase and do not end with period

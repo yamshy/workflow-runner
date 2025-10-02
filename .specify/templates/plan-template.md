@@ -47,7 +47,7 @@
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Verify compliance with the Workflow Runner Constitution (v1.0.0):
+Verify compliance with the Workflow Runner Constitution (v1.1.0):
 
 **Code Quality & Tooling**
 - [ ] .mise.toml exists with pinned versions (Node, Python, uv, pnpm, pyright, ruff, Biome)
@@ -95,6 +95,11 @@ Verify compliance with the Workflow Runner Constitution (v1.0.0):
 **Scope Control**
 - [ ] v0 limited to one workflow + one preset
 - [ ] Feature has specification document
+
+**Commit Standards**
+- [ ] Commit messages follow Conventional Commits format (type(scope): description)
+- [ ] Valid types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert
+- [ ] Breaking changes marked with `!` or `BREAKING CHANGE:` in body
 
 *Any violations must be documented in Complexity Tracking section*
 
@@ -265,4 +270,4 @@ directories captured above]
 - [ ] Complexity deviations documented
 
 ---
-*Based on Constitution v1.0.0 - See `.specify/memory/constitution.md`*
+*Based on Constitution v1.1.0 - See `.specify/memory/constitution.md`*
